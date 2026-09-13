@@ -49,19 +49,6 @@ body {
   }
 }
 
-@keyframes aurora {
-  0%,
-  100% {
-    transform: translate(0, 0) scale(1);
-  }
-  33% {
-    transform: translate(30px, -20px) scale(1.05);
-  }
-  66% {
-    transform: translate(-20px, 15px) scale(0.97);
-  }
-}
-
 .bg-aurora {
   background:
     radial-gradient(1000px 500px at 8% -8%, #152033 0%, transparent 55%),

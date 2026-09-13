@@ -3,10 +3,7 @@ import { get, put } from '@vercel/blob';
 export const LATEST_PATH = 'bot/latest.json';
 export const HISTORY_PATH = 'bot/history.json';
 
-export async function readJsonBlob(
-  pathname: string,
-  fallback: unknown
-): Promise<unknown> {
+export async function readJsonBlob<T>(pathname: string, fallback: T): Promise<T> {
   const token = process.env.BLOB_READ_WRITE_TOKEN;
   if (!token) return fallback;
   try {
@@ -18,7 +15,7 @@ export async function readJsonBlob(
     if (!result || !result.stream) return fallback;
     const text = await new Response(result.stream).text();
     if (!text) return fallback;
-    return JSON.parse(text);
+    return JSON.parse(text) as T;
   } catch {
     return fallback;
   }
