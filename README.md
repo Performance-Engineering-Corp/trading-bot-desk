@@ -2,7 +2,7 @@
 
 Public, read-only Next.js trading desk for a live (or paper) bot. Dark neon terminal board with **real trades only** — open positions, closed fills, risk meters, trade tape, and win/loss stats. No Alpha signal picks.
 
-Data is pushed by your bot into **Vercel Blob** via `POST /api/snapshot`; the page polls `GET /api/snapshot` (~8s) and `GET /api/history`.
+Data is pushed by your bot into **Vercel Blob** via `POST /api/snapshot`. The page server-renders the latest snapshot + history, then the client polls `GET /api/snapshot` (~8s) and `GET /api/history` (less often, and not while the tab is hidden).
 
 Repo: https://github.com/Performance-Engineering-Corp/trading-bot-desk
 

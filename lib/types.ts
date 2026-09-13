@@ -115,7 +115,8 @@ export type Snapshot = {
 };
 
 export type HistoryPayload = {
-  updated_at: string;
+  updated_at?: string;
   closed_trades: ClosedTrade[];
   stats?: WinLossStats;
+  error?: string;
 };

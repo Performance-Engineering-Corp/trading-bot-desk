@@ -1,3 +1,5 @@
+import type { WinLossStats } from './types';
+
 /**
  * Sanitize rules for public blob payloads:
  * - Strip order_id, client_order_id, and any *order_id* keys
@@ -77,27 +79,19 @@ export function mergeClosedTrades(
   max = 500
 ): Record<string, unknown>[] {
   const map = new Map<string, Record<string, unknown>>();
-  for (const item of [...existing, ...incoming]) {
-    if (!isPlainObject(item)) continue;
+  const ingest = (item: unknown) => {
+    if (!isPlainObject(item)) return;
     const cleaned = sanitizeValue(item) as Record<string, unknown>;
     map.set(tradeKey(cleaned), cleaned);
-  }
+  };
+  for (const item of existing) ingest(item);
+  for (const item of incoming) ingest(item);
   const merged = Array.from(map.values());
   merged.sort((a, b) => String(b.closed_at || '').localeCompare(String(a.closed_at || '')));
   return merged.slice(0, max);
 }
 
-export function computeStats(trades: Record<string, unknown>[]): {
-  wins: number;
-  losses: number;
-  scratch: number;
-  win_rate: number;
-  avg_win: number;
-  avg_loss: number;
-  profit_factor: number | null;
-  total_closed: number;
-  net_pnl: number;
-} {
+export function computeStats(trades: Record<string, unknown>[]): WinLossStats {
   let wins = 0;
   let losses = 0;
   let scratch = 0;

@@ -1,4 +1,4 @@
-'use client';
+import { memo } from 'react';
 
 type Props = {
   label: string;
@@ -7,7 +7,7 @@ type Props = {
   text: string;
 };
 
-export function Meter({ label, used, cap, text }: Props) {
+function MeterInner({ label, used, cap, text }: Props) {
   const pct = cap > 0 ? Math.min(100, Math.max(0, (used / cap) * 100)) : 0;
   let tone = 'from-desk-blue to-desk-purple';
   if (pct >= 90) tone = 'from-desk-red to-desk-red';
@@ -28,3 +28,5 @@ export function Meter({ label, used, cap, text }: Props) {
     </div>
   );
 }
+
+export const Meter = memo(MeterInner);

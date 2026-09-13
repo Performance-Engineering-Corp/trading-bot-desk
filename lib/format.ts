@@ -53,3 +53,9 @@ export function pct(n: number | null | undefined, digits = 1): string {
   if (n == null || Number.isNaN(n)) return '—';
   return `${(n * 100).toFixed(digits)}%`;
 }
+
+/** Absolute money (no leading +). Use for caps / cash / used-vs-cap labels. */
+export function fmtAbsMoney(n: number | null | undefined, digits = 2): string {
+  const s = fmtMoney(n, digits);
+  return s.charCodeAt(0) === 43 /* + */ ? s.slice(1) : s;
+}
