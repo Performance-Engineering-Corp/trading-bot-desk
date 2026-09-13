@@ -1,4 +1,4 @@
-import { list, put } from '@vercel/blob';
+import { get, put } from '@vercel/blob';
 
 export const LATEST_PATH = 'bot/latest.json';
 export const HISTORY_PATH = 'bot/history.json';
@@ -10,11 +10,15 @@ export async function readJsonBlob(
   const token = process.env.BLOB_READ_WRITE_TOKEN;
   if (!token) return fallback;
   try {
-    const { blobs } = await list({ prefix: pathname, token, limit: 1 });
-    if (!blobs.length) return fallback;
-    const r = await fetch(blobs[0].url, { cache: 'no-store' });
-    if (!r.ok) return fallback;
-    return await r.json();
+    const result = await get(pathname, {
+      access: 'private',
+      token,
+      useCache: false,
+    });
+    if (!result || !result.stream) return fallback;
+    const text = await new Response(result.stream).text();
+    if (!text) return fallback;
+    return JSON.parse(text);
   } catch {
     return fallback;
   }
@@ -27,7 +31,7 @@ export async function writeJsonBlob(pathname: string, data: unknown) {
   }
   const body = JSON.stringify(data);
   const blob = await put(pathname, body, {
-    access: 'public',
+    access: 'private',
     token,
     contentType: 'application/json',
     addRandomSuffix: false,

@@ -102,12 +102,17 @@ export async function POST(req: Request) {
     snapshot.tape = snapshot.recent_events;
   }
 
-  const latest = await writeJsonBlob(LATEST_PATH, snapshot);
-  return Response.json({
-    ok: true,
-    url: latest.url,
-    bytes: latest.bytes,
-    history_url: historyUrl,
-    history_trades: historyCount,
-  });
+  try {
+    const latest = await writeJsonBlob(LATEST_PATH, snapshot);
+    return Response.json({
+      ok: true,
+      url: latest.url,
+      bytes: latest.bytes,
+      history_url: historyUrl,
+      history_trades: historyCount,
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'write failed';
+    return Response.json({ error: message }, { status: 500 });
+  }
 }
