@@ -1,0 +1,70 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body {
+  background-color: #0b0f14;
+  color: #e6edf5;
+  min-height: 100vh;
+}
+
+::selection {
+  background: rgba(56, 189, 248, 0.28);
+  color: #fff;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(56, 189, 248, 0.35) transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  border-radius: 9999px;
+  background: linear-gradient(180deg, rgba(56, 189, 248, 0.45), rgba(167, 139, 250, 0.45));
+}
+
+@layer components {
+  .desk-card {
+    @apply rounded-xl border border-desk-border bg-desk-bg2/90 backdrop-blur-sm;
+  }
+  .desk-label {
+    @apply text-[0.7rem] font-semibold uppercase tracking-[0.07em] text-desk-muted;
+  }
+  .pos {
+    @apply text-desk-green;
+  }
+  .neg {
+    @apply text-desk-red;
+  }
+  .neu {
+    @apply text-desk-muted;
+  }
+}
+
+@keyframes aurora {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(30px, -20px) scale(1.05);
+  }
+  66% {
+    transform: translate(-20px, 15px) scale(0.97);
+  }
+}
+
+.bg-aurora {
+  background:
+    radial-gradient(1000px 500px at 8% -8%, #152033 0%, transparent 55%),
+    radial-gradient(800px 400px at 92% 0%, rgba(56, 189, 248, 0.08) 0%, transparent 50%),
+    #0b0f14;
+}
