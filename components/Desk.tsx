@@ -344,12 +344,20 @@ export function Desk({ initialSnapshot, initialHistory }: DeskProps) {
             )}
           </span>
         </div>
-        <div className="flex flex-wrap items-center gap-7">
+        <div className="flex flex-wrap items-center gap-5 sm:gap-7">
           <div className="font-mono text-[0.82rem] text-desk-muted">
             Refresh {shortDate(snap.generated_at) || '—'}
           </div>
           <div className="text-right">
-            <div className="desk-label">Day PnL</div>
+            <div className="desk-label">Crypto day</div>
+            <div className={`font-mono text-base font-bold leading-tight ${clsPnL(c.day_pnl)}`}>{fmtMoney(c.day_pnl)}</div>
+          </div>
+          <div className="text-right">
+            <div className="desk-label">Stocks day</div>
+            <div className={`font-mono text-base font-bold leading-tight ${clsPnL(s.day_pnl)}`}>{fmtMoney(s.day_pnl)}</div>
+          </div>
+          <div className="text-right">
+            <div className="desk-label">Combined day</div>
             <div className={`font-mono text-[1.85rem] font-bold leading-tight ${clsPnL(comb.day_pnl)}`}>
               {fmtMoney(comb.day_pnl)}
             </div>
@@ -366,7 +374,17 @@ export function Desk({ initialSnapshot, initialHistory }: DeskProps) {
         <Stat label="Profit factor" value={profitFactor} />
       </div>
 
-      <PnLChart trades={closed} allTrades={closed} />
+      <PnLChart
+        trades={closed}
+        allTrades={closed}
+        dayBooks={{
+          cryptoDay: c.day_pnl,
+          stocksDay: s.day_pnl,
+          combinedDay: comb.day_pnl,
+          cryptoUnreal: c.unrealized,
+          stocksUnreal: s.unrealized,
+        }}
+      />
 
       <div className="mb-3.5 grid gap-3.5 md:grid-cols-3">
         <section className="desk-card p-4">
@@ -409,12 +427,18 @@ export function Desk({ initialSnapshot, initialHistory }: DeskProps) {
           <h2 className="desk-label mb-3">Stocks risk</h2>
           <div className="mb-2 flex flex-wrap gap-4 text-[0.8rem]">
             <span>
-              Day PnL <b className={`font-mono font-semibold ${clsPnL(s.day_pnl)}`}>{fmtMoney(s.day_pnl)}</b>
+              Realized <b className={`font-mono font-semibold ${clsPnL(s.realized)}`}>{fmtMoney(s.realized)}</b>
+            </span>
+            <span>
+              Unrealized <b className={`font-mono font-semibold ${clsPnL(s.unrealized)}`}>{fmtMoney(s.unrealized)}</b>
+            </span>
+            <span>
+              Day <b className={`font-mono font-semibold ${clsPnL(s.day_pnl)}`}>{fmtMoney(s.day_pnl)}</b>
             </span>
             <span>
               Status{' '}
               <b className={`font-mono font-semibold ${s.halted ? 'neg' : 'neu'}`}>
-                {s.idle ? 'idle' : s.halted ? 'HALTED' : 'active'}
+                {s.idle && !s.positions.length ? 'idle' : s.halted ? 'HALTED' : 'active'}
               </b>
             </span>
           </div>
@@ -495,27 +519,33 @@ export function Desk({ initialSnapshot, initialHistory }: DeskProps) {
         </div>
       </section>
 
-      {s.positions.length > 0 && (
-        <section className="desk-card mb-3.5 p-4">
-          <h2 className="desk-label mb-3">Open stock positions</h2>
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-[0.84rem]">
-              <thead>
-                <tr>
-                  {STOCK_COLS.map((h) => (
-                    <Th key={h}>{h}</Th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {s.positions.map((r) => (
-                  <StockRow key={`${r.product_id}-${r.opened_at}`} r={r} />
+      <section className="desk-card mb-3.5 p-4">
+        <h2 className="desk-label mb-3">Open stock positions</h2>
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-[0.84rem]">
+            <thead>
+              <tr>
+                {STOCK_COLS.map((h) => (
+                  <Th key={h}>{h}</Th>
                 ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      )}
+              </tr>
+            </thead>
+            <tbody>
+              {!s.positions.length ? (
+                <tr>
+                  <td colSpan={6} className="px-2 py-3 text-desk-muted">
+                    No open stock positions
+                  </td>
+                </tr>
+              ) : (
+                s.positions.map((r) => (
+                  <StockRow key={`${r.product_id}-${r.opened_at}`} r={r} />
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
 
       <section className="desk-card mb-3.5 p-4">
         <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
