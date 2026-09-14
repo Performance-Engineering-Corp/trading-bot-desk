@@ -156,6 +156,7 @@ export function Desk({ initialSnapshot, initialHistory }: DeskProps) {
   const [snap, setSnap] = useState<Snapshot>(() => initialSnapshot ?? EMPTY_SNAPSHOT);
   const [historyStats, setHistoryStats] = useState<WinLossStats | null>(() => initialHistory?.stats ?? null);
   const [historyTrades, setHistoryTrades] = useState<ClosedTrade[]>(() => initialHistory?.closed_trades ?? []);
+  const [tradeQuery, setTradeQuery] = useState('');
   const [err, setErr] = useState<string | null>(() => {
     const e = initialSnapshot?.error;
     return e && e !== 'no data yet' ? e : null;
@@ -276,8 +277,35 @@ export function Desk({ initialSnapshot, initialHistory }: DeskProps) {
     snap.meta?.api_health?.marks_error ||
     (!snap.generated_at && snap.error === 'no data yet');
 
-  const closedVisible = useMemo(() => closed.slice(0, CLOSED_LIMIT), [closed]);
-  const tapeVisible = useMemo(() => tape.slice(0, TAPE_LIMIT), [tape]);
+  const q = tradeQuery.trim().toLowerCase();
+
+  const openMatches = useMemo(() => {
+    const all = [...(c.positions || []), ...(s.positions || [])];
+    if (!q) return all;
+    return all.filter((r) => {
+      const hay = `${r.product_id || ''} ${r.ticker || ''}`.toLowerCase();
+      return hay.includes(q);
+    });
+  }, [c.positions, s.positions, q]);
+
+  const closedMatches = useMemo(() => {
+    if (!q) return closed;
+    return closed.filter((tr) => {
+      const hay = `${tr.product_id || ''} ${tr.ticker || ''} ${tr.reason || ''}`.toLowerCase();
+      return hay.includes(q);
+    });
+  }, [closed, q]);
+
+  const closedVisible = useMemo(
+    () => (q ? closedMatches : closed).slice(0, q ? 100 : CLOSED_LIMIT),
+    [closed, closedMatches, q]
+  );
+  const tapeVisible = useMemo(() => {
+    if (!q) return tape.slice(0, TAPE_LIMIT);
+    return tape
+      .filter((e) => `${e.product || ''} ${e.reason || ''}`.toLowerCase().includes(q))
+      .slice(0, TAPE_LIMIT);
+  }, [tape, q]);
 
   const profitFactor =
     stats.profit_factor == null ? (stats.wins ? '∞' : '—') : Number(stats.profit_factor).toFixed(2);
@@ -489,9 +517,82 @@ export function Desk({ initialSnapshot, initialHistory }: DeskProps) {
         </section>
       )}
 
+      <section className="desk-card mb-3.5 p-4">
+        <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h2 className="desk-label mb-1">Find a trade</h2>
+            <div className="text-[0.75rem] text-desk-muted">Search opens + closes by product (e.g. XRP)</div>
+          </div>
+          <input
+            type="search"
+            value={tradeQuery}
+            onChange={(e) => setTradeQuery(e.target.value)}
+            placeholder="XRP, SOL, FIL…"
+            className="min-w-[200px] flex-1 rounded-md border border-desk-border bg-desk-bg3 px-3 py-2 font-mono text-sm text-desk-text outline-none ring-desk-cyan/40 placeholder:text-desk-muted focus:ring-2 sm:max-w-xs"
+          />
+        </div>
+        {q ? (
+          <div className="space-y-3">
+            <div>
+              <div className="desk-label mb-1">Open now ({openMatches.length})</div>
+              {!openMatches.length ? (
+                <div className="text-sm text-desk-muted">No open position matching “{tradeQuery.trim()}”</div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse text-[0.84rem]">
+                    <thead>
+                      <tr>
+                        {CRYPTO_COLS.map((h) => (
+                          <Th key={h}>{h}</Th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {openMatches.map((r) => (
+                        <CryptoRow key={`search-${r.product_id}-${r.opened_at}`} r={r} />
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+            <div>
+              <div className="desk-label mb-1">Closed history ({closedMatches.length})</div>
+              {!closedMatches.length ? (
+                <div className="text-sm text-desk-muted">No closed trades matching “{tradeQuery.trim()}”</div>
+              ) : (
+                <div className="max-h-[280px] overflow-auto">
+                  <table className="w-full border-collapse text-[0.84rem]">
+                    <thead>
+                      <tr>
+                        {CLOSED_COLS.map((h) => (
+                          <th
+                            key={h}
+                            className="sticky top-0 border-b border-desk-border bg-desk-bg2 px-2 py-1.5 text-left text-[0.7rem] font-semibold uppercase tracking-wide text-desk-muted"
+                          >
+                            {h}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {closedMatches.map((tr, i) => (
+                        <ClosedRow key={`search-c-${tr.id || tr.product_id}-${tr.closed_at}-${i}`} t={tr} />
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="text-sm text-desk-muted">Type a ticker to jump to entry / exit / open status.</div>
+        )}
+      </section>
+
       <div className="mb-3.5 grid gap-3.5 lg:grid-cols-[1.4fr_1fr]">
         <section className="desk-card p-4">
-          <h2 className="desk-label mb-3">Closed trades</h2>
+          <h2 className="desk-label mb-3">Closed trades{q ? ` · filtered` : ''}</h2>
           <div className="max-h-[420px] overflow-auto">
             <table className="w-full border-collapse text-[0.84rem]">
               <thead>
