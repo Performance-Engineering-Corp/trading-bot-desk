@@ -12,6 +12,7 @@ import {
 } from '@/lib/defaults';
 import { clsPnL, fmtAbsMoney, fmtMoney, fmtNum, pct, shortDate, shortTs } from '@/lib/format';
 import { Meter } from './Meter';
+import { PnLChart } from './PnLChart';
 
 const REFRESH_MS = 8000;
 const HISTORY_EVERY = 4;
@@ -242,8 +243,11 @@ export function Desk({ initialSnapshot, initialHistory }: DeskProps) {
   const comb = snap.combined;
   const live = snap.live_trading;
 
+  // Prefer longer history blob for inception / charts; fall back to snapshot slice.
   const closed = useMemo<ClosedTrade[]>(() => {
-    if (snap.closed_trades && snap.closed_trades.length) return snap.closed_trades;
+    const snapClosed = snap.closed_trades ?? [];
+    if (historyTrades.length >= snapClosed.length && historyTrades.length > 0) return historyTrades;
+    if (snapClosed.length) return snapClosed;
     return historyTrades;
   }, [snap.closed_trades, historyTrades]);
 
@@ -333,6 +337,8 @@ export function Desk({ initialSnapshot, initialHistory }: DeskProps) {
         <Stat label="Net closed" value={fmtMoney(stats.net_pnl ?? 0)} tone={clsPnL(stats.net_pnl)} />
         <Stat label="Profit factor" value={profitFactor} />
       </div>
+
+      <PnLChart trades={closed} allTrades={closed} />
 
       <div className="mb-3.5 grid gap-3.5 md:grid-cols-3">
         <section className="desk-card p-4">
